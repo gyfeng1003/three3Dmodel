@@ -1,19 +1,20 @@
 <template>
   <div class="home">
-   111
+    <NetLiZi></NetLiZi>
   </div>
 </template>
 
 <script>
-
+import NetLiZi from '@/components/NetLizi'
 export default {
   name: 'Home',
   components: {
+    NetLiZi
   }
 }
 </script>
 <style lang="less" scoped>
 .home {
-  width: 200px;
+
 }
 </style>
