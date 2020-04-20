@@ -7,11 +7,11 @@
 
 <script>
 import NetLiZi from '@/components/NetLizi'
-import VRobot from '@/components/RobotComp'
+// import VRobot from '@/components/RobotComp'
 export default {
   name: 'Home',
   components: {
-    VRobot,
+    // VRobot,
     NetLiZi
   }
 }
