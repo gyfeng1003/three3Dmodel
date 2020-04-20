@@ -39,11 +39,11 @@ export default {
       // 灯光
       const aLight = new THREE.AmbientLight(0xffffff, 1);
 			this.scene.add(aLight);
-      var light = new THREE.DirectionalLight( 0xffffff, 1);
-      this.scene.add(light);
-      const pLight = new THREE.PointLight(0xffffff, 1);
-			pLight.position.set(0, 110, 200);
-      this.scene.add(pLight);
+      // var light = new THREE.DirectionalLight( 0xffffff, 1);
+      // this.scene.add(light);
+      // const pLight = new THREE.PointLight(0xffffff, 1);
+			// pLight.position.set(0, 110, 200);
+      // this.scene.add(pLight);
 
       // 渲染器
       this.renderer = new THREE.WebGLRenderer({
@@ -66,26 +66,33 @@ export default {
       })
 
       // 加载模型
-      // this.loadTextureModal()
+      // this.loadAllTexture()
       this.loadTextureImage()
     },
     loadTextureImage() {
       let _this = this
       var loader = new THREE.TextureLoader();
       const objLoader = new OBJLoader();
-      loader.load(
-      '/cat/Cat_bump.jpg',
-      function ( texture ) {
-        var material = new THREE.MeshStandardMaterial({
-          map: texture
-        });
-        objLoader.load(
+      var texture = loader.load('/cat/Cat_diffuse.jpg');
+      var textureBump = loader.load('/cat/Cat_bump.jpg');
+      var tableMat = new THREE.MeshPhongMaterial({
+        map: texture,
+        // normalMap: textureBump, 
+        // normalScale: 0.3
+        bumpMap: textureBump, //凹凸贴图
+        bumpScale: 0.2
+      });
+      textureBump.needsUpdate = true;
+      textureBump.wrapS = THREE.RepeatWrapping
+      textureBump.wrapT = THREE.RepeatWrapping
+   
+      objLoader.load(
         "/cat/12221_Cat_v1_l3.obj",
         function(obj) {
           let tablet = obj
           tablet.traverse(function(child) {
             if (child instanceof THREE.Mesh) {
-              child.material = material
+              child.material = tableMat
             }
           })
           obj.rotateX(-20)
@@ -106,15 +113,45 @@ export default {
         function(err) {
           console.error("OBJError: ", err);
         })
-      },
-      // onProgress callback currently not supported
-      undefined,
-      // onError callback
-      function ( err ) {
-        console.error( 'An error happened.', err );
+    },
+    loadAllTexture() {
+      let loader = new THREE.TextureLoader();
+      var textureNormal = loader.load('/cat/Cat_diffuse.jpg');
+      var textureBump = loader.load('/cat/Cat_bump.jpg');
+      var tableMat = new THREE.MeshStandardMaterial({
+        // color: 0xff0000,
+        normalMap: textureNormal, //法线贴图
+        //设置深浅程度，默认值(1,1)。
+        normalScale: new THREE.Vector2(3, 3),
+      });
+      tableMat.bumpMap = textureBump
+      tableMat.bumpScale = 0.03
+     
+      Promise.all([this.loadCoffeeTexture(loader), this.loadGrayTexture(loader)]).then(result=>{
+        // tableMat.map = result[1]
+        // tableMat.needsUpdate = true
+        this.loadTextureModal(tableMat)
       })
     },
-    loadTextureModal(){
+    loadCoffeeTexture(loader){
+      return new Promise((resolve)=>{
+        loader.load('/cat/Cat_diffuse.jpg', function(map){
+          map.wrapS = THREE.RepeatWrapping
+          map.wrapT = THREE.RepeatWrapping
+          resolve(map)
+        })
+      })
+    },
+    loadGrayTexture(loader){
+      return new Promise((resolve)=>{
+      loader.load('/cat/Cat_bump.jpg', function(map){
+          map.wrapS = THREE.RepeatWrapping
+          map.wrapT = THREE.RepeatWrapping
+          resolve(map)
+        })
+      })
+    },
+    loadTextureModal(material){
       let _this = this
       const mtlLoader = new MTLLoader();
       const objLoader = new OBJLoader();
@@ -128,6 +165,12 @@ export default {
         .load(
         "/cat/12221_Cat_v1_l3.obj",
         function(obj) {
+          // let tablet = obj
+          // tablet.traverse(function(child) {
+          //   if (child instanceof THREE.Mesh) {
+          //     child.material = material
+          //   }
+          // })
           obj.rotateX(-20)
           obj.rotateY(0)
           _this.scene.add(obj)
