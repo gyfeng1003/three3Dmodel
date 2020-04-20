@@ -39,8 +39,8 @@ export default {
       // 灯光
       const aLight = new THREE.AmbientLight(0xffffff, 1);
 			this.scene.add(aLight);
-      // var light = new THREE.DirectionalLight( 0xffffff, 1);
-      // this.scene.add(light);
+      var light = new THREE.DirectionalLight( 0xffffff, 1);
+      this.scene.add(light);
       // const pLight = new THREE.PointLight(0xffffff, 1);
 			// pLight.position.set(0, 110, 200);
       // this.scene.add(pLight);
@@ -75,12 +75,12 @@ export default {
       const objLoader = new OBJLoader();
       var texture = loader.load('/cat/Cat_diffuse.jpg');
       var textureBump = loader.load('/cat/Cat_bump.jpg');
-      var tableMat = new THREE.MeshPhongMaterial({
+      var tableMat = new THREE.MeshStandardMaterial({
         map: texture,
         // normalMap: textureBump, 
-        // normalScale: 0.3
+        // normalScale: new THREE.Vector2(3, 3),
         bumpMap: textureBump, //凹凸贴图
-        bumpScale: 0.2
+        bumpScale: 1
       });
       textureBump.needsUpdate = true;
       textureBump.wrapS = THREE.RepeatWrapping
@@ -199,7 +199,7 @@ export default {
     },
     render() {
       this.renderer.render(this.scene, this.camera);
-      this.scene.rotation.y += 0.002;
+      // this.scene.rotation.y += 0.002;
       cancelAnimationFrame(animationId)
       animationId = requestAnimationFrame(this.render);
     }
