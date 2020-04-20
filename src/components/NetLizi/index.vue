@@ -1,11 +1,15 @@
 <template>
+<div class="netLizi-box">
+  <div id="loading"><span id="loadingPercent">0</span>%</div>
   <div id="netlizi"></div>
+</div>
 </template>
 <script>
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader' // obj文件加载
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import {MTLLoader} from 'three/examples/jsm/loaders/MTLLoader'
+let animationId = null
 export default {
   data(){
     return {
@@ -30,70 +34,148 @@ export default {
       // 相机
       this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
       this.camera.position.set(-74, 0, 83);
-      this.camera.lookAt(0,0,0)
-      
+      this.camera.lookAt(this.scene.position)
 
       // 灯光
-      const aLight = new THREE.AmbientLight(0xfffff, 1);
+      const aLight = new THREE.AmbientLight(0xffffff, 1);
 			this.scene.add(aLight);
       var light = new THREE.DirectionalLight( 0xffffff, 1);
       this.scene.add(light);
+      const pLight = new THREE.PointLight(0xffffff, 1);
+			pLight.position.set(0, 110, 200);
+      this.scene.add(pLight);
 
       // 渲染器
-      this.renderer = new THREE.WebGLRenderer();
+      this.renderer = new THREE.WebGLRenderer({
+        antialias: true
+      });
       this.renderer.setSize(window.innerWidth, window.innerHeight)
+      this.renderer.setClearColor(0x000000, 1);
       let container = document.getElementById('netlizi')
       container.appendChild(this.renderer.domElement)
 
       // 控制器
       this.controls = new OrbitControls(this.camera, this.renderer.domElement );
+      this.controls.minDistance = 50;
+      this.controls.maxDistance = 300;
+      this.controls.enablePan = false;
+      this.controls.update();
       this.controls.addEventListener('change', (event)=>{
         console.log(event)
         this.render()
       })
 
+      // 加载模型
+      this.loadTextureModal()
+      // this.loadTextureImage()
+    },
+    loadTextureImage() {
       let _this = this
-      // 没有材质
+      var loader = new THREE.TextureLoader();
+      const objLoader = new OBJLoader();
+      loader.load(
+      // resource URL
+      '/cat/Cat_bump.jpg',
+      // onLoad callback
+      function ( texture ) {
+        // in this example we create the material when the texture is loaded
+        var material = new THREE.MeshBasicMaterial({
+          map: texture
+        });
+        objLoader.load(
+        "/cat/12221_Cat_v1_l3.obj",
+        function(obj) {
+          debugger
+          obj.rotateX(-20)
+          obj.rotateY(0)
+          _this.scene.add(obj)
+          _this.render()
+        },
+        function(xhr) {
+          console.log("OBJLoaded: ", (xhr.loaded / xhr.total * 100).toFixed(0), "%");
+          
+          let per = (xhr.loaded / xhr.total * 100).toFixed(0);
+          if(per < 100) {
+            document.getElementById("loadingPercent").innerHTML = per;
+          }else {
+            document.getElementById("loading").remove();
+          }
+        },
+        function(err) {
+          console.error("OBJError: ", err);
+        })
+      },
+      // onProgress callback currently not supported
+      undefined,
+      // onError callback
+      function ( err ) {
+        console.error( 'An error happened.' );
+      })
+    },
+    loadTextureModal(){
+      let _this = this
       const mtlLoader = new MTLLoader();
       const objLoader = new OBJLoader();
 			mtlLoader.setPath("/cat/")
+      .load(
+      "12221_Cat_v1_l3.mtl",
+      function(mtl) {
+        mtl.side = THREE.DoubleSide;
+        objLoader
+        .setMaterials(mtl)
         .load(
-        "12221_Cat_v1_l3.mtl",
-        function(mtl) {
-          mtl.side = THREE.DoubleSide;
-          objLoader
-          .setMaterials(mtl)
-          .load(
-          "/cat/12221_Cat_v1_l3.obj",
-          function(obj) {
-            obj.rotateX(-20)
-            obj.rotateY(0)
-            _this.scene.add(obj)
-            _this.render()
-          })
+        "/cat/12221_Cat_v1_l3.obj",
+        function(obj) {
+          obj.rotateX(-20)
+          obj.rotateY(0)
+          _this.scene.add(obj)
+          _this.render()
+        },
+        function(xhr) {
+          console.log("OBJLoaded: ", (xhr.loaded / xhr.total * 100).toFixed(0), "%");
+          
+          let per = (xhr.loaded / xhr.total * 100).toFixed(0);
+          if(per < 100) {
+            document.getElementById("loadingPercent").innerHTML = per;
+          }else {
+            document.getElementById("loading").remove();
+          }
+        },
+        function(err) {
+          console.error("OBJError: ", err);
         })
-      // new OBJLoader().load('/cat/12221_Cat_v1_l3.obj', function (obj) {
-      //   obj.rotateX(-20)
-      //   obj.rotateY(0)
-      //   _this.scene.add(obj)
-      //   _this.render()
-      // },
-      // function(xhr) {
-      //   // console.log(xhr.loaded)
-      //   // console.log(xhr.total)
-      // },
-      // function(err) {
-      //   console.error("OBJError: ", err);
-      // });
+      },
+      function(xhr) {
+        console.log("MTLLoaded: ", (xhr.loaded / xhr.total * 100).toFixed(0), "%");
+      },
+      function(err) {
+        console.error("MTLError: ", err);
+      })
     },
     render() {
       this.renderer.render(this.scene, this.camera);
+      this.scene.rotation.y += 0.002;
+      cancelAnimationFrame(animationId)
+      animationId = requestAnimationFrame(this.render);
     }
   }
 }
 </script>
 <style lang="less" scoped>
-.netlizi {
-
-}
+#loading {
+  position:absolute;
+  left:50%;
+  top:50%;
+  z-index:99;
+  margin-left:-100px;
+  margin-top:-100px;
+  width:200px;
+  height:200px;
+  line-height:200px;
+  text-align:center;
+  font-size:18px;
+  color:#fff;}
+  #loadingPercent {
+    font-size:96px;
+  }
 </style>

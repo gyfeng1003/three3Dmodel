@@ -105,9 +105,7 @@ export default {
       //渲染函数
       //console.log("Render...");
       this.renderer.render(this.scene, this.camera);
-      
       this.scene.rotation.y += 0.002;
-      
       requestAnimationFrame(this.render);
     }
   }
