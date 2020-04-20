@@ -66,26 +66,28 @@ export default {
       })
 
       // 加载模型
-      this.loadTextureModal()
-      // this.loadTextureImage()
+      // this.loadTextureModal()
+      this.loadTextureImage()
     },
     loadTextureImage() {
       let _this = this
       var loader = new THREE.TextureLoader();
       const objLoader = new OBJLoader();
       loader.load(
-      // resource URL
       '/cat/Cat_bump.jpg',
-      // onLoad callback
       function ( texture ) {
-        // in this example we create the material when the texture is loaded
-        var material = new THREE.MeshBasicMaterial({
+        var material = new THREE.MeshStandardMaterial({
           map: texture
         });
         objLoader.load(
         "/cat/12221_Cat_v1_l3.obj",
         function(obj) {
-          debugger
+          let tablet = obj
+          tablet.traverse(function(child) {
+            if (child instanceof THREE.Mesh) {
+              child.material = material
+            }
+          })
           obj.rotateX(-20)
           obj.rotateY(0)
           _this.scene.add(obj)
@@ -109,7 +111,7 @@ export default {
       undefined,
       // onError callback
       function ( err ) {
-        console.error( 'An error happened.' );
+        console.error( 'An error happened.', err );
       })
     },
     loadTextureModal(){

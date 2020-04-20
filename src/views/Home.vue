@@ -2,6 +2,14 @@
   <div class="home">
     <NetLiZi></NetLiZi>
     <!-- <v-robot></v-robot> -->
+    <div class="viewer-bottom">
+      <div class="viewer-bottom-right">
+        <div class="control"></div>
+        <div class="control"></div>
+        <div class="control"></div>
+        <div class="control"></div>
+      </div>
+    </div>
   </div>
 </template>
 
