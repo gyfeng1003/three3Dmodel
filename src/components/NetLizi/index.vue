@@ -23,16 +23,66 @@ export default {
       controls: null
     }
   },
+  props: {
+    rotate: {
+      type: Boolean,
+      default: true
+    },
+    bgObj: {
+      type: Object,
+      default: ()=>({})
+    },
+    type: {
+      type: String
+    }
+  },
   mounted(){
     this.init()
   },
+  computed: {
+    isBg() {
+      return this.bgObj.type === 'bg'
+    },
+    current(){
+      return this.bgObj
+    }
+  },
+  watch: {
+    current(val) {
+      console.log(val)
+    }
+  },
   methods: {
     init(){
+      let elem = document.getElementById('netlizi')
+      let canvasAspect = elem.clientWidth / elem.clientHeight
+
       // 场景
       this.scene = new THREE.Scene();
+      //Load background texture
+      let loader = new THREE.TextureLoader();
+      let _this = this
+      if (this.isBg) { //设置背景图
+        loader.load(this.bgObj.imgUrl, function(value){
+          let defaultBg = value
+          _this.scene.background = defaultBg;
+          let imageAspect=defaultBg.image?defaultBg.image.width/defaultBg.image.height:1;
+          let aspect=imageAspect/canvasAspect;
 
+          defaultBg.offset.x = aspect > 1 ? (1-1/aspect)/2:0;
+          defaultBg.repeat.x = aspect > 1 ?1 / aspect:1;
+          defaultBg.offset.y = aspect > 1 ? 0 : (1 - aspect) / 2;
+          defaultBg.repeat.y = aspect > 1 ? 1 : aspect;
+        })
+      } else {
+        loader.load(this.bgObj.imgUrl, function(value){
+          let defaultBg = value
+          _this.scene.background = defaultBg;
+        })
+      }
+     
       // 相机
-      this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
+      this.camera = new THREE.PerspectiveCamera( 75, canvasAspect, 1, 1000 );
       this.camera.position.set(-74, 0, 83);
       this.camera.lookAt(this.scene.position)
 
@@ -49,7 +99,8 @@ export default {
       this.renderer = new THREE.WebGLRenderer({
         antialias: true
       });
-      this.renderer.setSize(window.innerWidth, window.innerHeight)
+      this.renderer.autoClearColor = false;
+      this.renderer.setSize(elem.clientWidth, elem.clientHeight)
       this.renderer.setClearColor(0x000000, 1);
       let container = document.getElementById('netlizi')
       container.appendChild(this.renderer.domElement)
@@ -59,15 +110,23 @@ export default {
       this.controls.minDistance = 50;
       this.controls.maxDistance = 300;
       this.controls.enablePan = false;
+      this.controls.target.set(0, 0, 0);
       this.controls.update();
       this.controls.addEventListener('change', (event)=>{
-        console.log(event)
+        // console.log(event)
         this.render()
       })
 
       // 加载模型
-      // this.loadAllTexture()
-      this.loadTextureImage()
+      this.loadModel()
+    },
+    loadModel(){
+      if (this.isBg) {
+        // this.loadTextureModal()
+        this.loadTextureImage()
+      } else {
+        this.switchMaterialModel()
+      }
     },
     loadTextureImage() {
       let _this = this
@@ -114,44 +173,7 @@ export default {
           console.error("OBJError: ", err);
         })
     },
-    loadAllTexture() {
-      let loader = new THREE.TextureLoader();
-      var textureNormal = loader.load('/cat/Cat_diffuse.jpg');
-      var textureBump = loader.load('/cat/Cat_bump.jpg');
-      var tableMat = new THREE.MeshStandardMaterial({
-        // color: 0xff0000,
-        normalMap: textureNormal, //法线贴图
-        //设置深浅程度，默认值(1,1)。
-        normalScale: new THREE.Vector2(3, 3),
-      });
-      tableMat.bumpMap = textureBump
-      tableMat.bumpScale = 0.03
-     
-      Promise.all([this.loadCoffeeTexture(loader), this.loadGrayTexture(loader)]).then(result=>{
-        // tableMat.map = result[1]
-        // tableMat.needsUpdate = true
-        this.loadTextureModal(tableMat)
-      })
-    },
-    loadCoffeeTexture(loader){
-      return new Promise((resolve)=>{
-        loader.load('/cat/Cat_diffuse.jpg', function(map){
-          map.wrapS = THREE.RepeatWrapping
-          map.wrapT = THREE.RepeatWrapping
-          resolve(map)
-        })
-      })
-    },
-    loadGrayTexture(loader){
-      return new Promise((resolve)=>{
-      loader.load('/cat/Cat_bump.jpg', function(map){
-          map.wrapS = THREE.RepeatWrapping
-          map.wrapT = THREE.RepeatWrapping
-          resolve(map)
-        })
-      })
-    },
-    loadTextureModal(material){
+    loadTextureModal(){
       let _this = this
       const mtlLoader = new MTLLoader();
       const objLoader = new OBJLoader();
@@ -165,12 +187,6 @@ export default {
         .load(
         "/cat/12221_Cat_v1_l3.obj",
         function(obj) {
-          // let tablet = obj
-          // tablet.traverse(function(child) {
-          //   if (child instanceof THREE.Mesh) {
-          //     child.material = material
-          //   }
-          // })
           obj.rotateX(-20)
           obj.rotateY(0)
           _this.scene.add(obj)
@@ -197,9 +213,37 @@ export default {
         console.error("MTLError: ", err);
       })
     },
+    switchMaterialModel(){
+      let _this = this
+      const objLoader = new OBJLoader();
+      objLoader.load(
+        "/cat/12221_Cat_v1_l3.obj",
+        function(obj) {
+          obj.rotateX(-20)
+          obj.rotateY(0)
+          _this.scene.add(obj)
+          _this.render()
+        },
+        function(xhr) {
+          console.log("OBJLoaded: ", (xhr.loaded / xhr.total * 100).toFixed(0), "%");
+          
+          let per = (xhr.loaded / xhr.total * 100).toFixed(0);
+          if(per < 100) {
+            document.getElementById("loadingPercent").innerHTML = per;
+          }else {
+            document.getElementById("loading").remove();
+          }
+        },
+        function(err) {
+          console.error("OBJError: ", err);
+        })
+    },
     render() {
       this.renderer.render(this.scene, this.camera);
-      // this.scene.rotation.y += 0.002;
+      if (this.rotate) {
+        this.scene.rotation.y += 0.002;
+      }
+     
       cancelAnimationFrame(animationId)
       animationId = requestAnimationFrame(this.render);
     }
@@ -222,5 +266,9 @@ export default {
   color:#fff;}
   #loadingPercent {
     font-size:96px;
+  }
+  .netLizi-box, #netlizi {
+    width: 100%;
+    height: 100%;
   }
 </style>
