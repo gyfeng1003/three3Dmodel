@@ -20,7 +20,10 @@ export default {
       // 渲染器
       renderer: null,
       // 控制器
-      controls: null
+      controls: null,
+      // 背景场景
+      bgScene: null,
+      bgMesh: null
     }
   },
   props: {
@@ -30,26 +33,30 @@ export default {
     },
     bgObj: {
       type: Object,
-      default: ()=>({})
-    },
-    type: {
-      type: String
+      default: ()=>({
+        type: '',
+        imgUrl: ``
+      })
     }
   },
   mounted(){
-    this.init()
+    // this.init()
   },
   computed: {
     isBg() {
       return this.bgObj.type === 'bg'
-    },
-    current(){
-      return this.bgObj
     }
   },
   watch: {
-    current(val) {
-      console.log(val)
+    bgObj: {
+      deep: true,
+      immediate: true,
+      handler (val) {
+        console.log('change', val)
+        this.$nextTick(()=>{
+          this.init()
+        })
+      }
     }
   },
   methods: {
@@ -75,14 +82,29 @@ export default {
           defaultBg.repeat.y = aspect > 1 ? 1 : aspect;
         })
       } else {
-        loader.load(this.bgObj.imgUrl, function(value){
-          let defaultBg = value
-          _this.scene.background = defaultBg;
-        })
+        if (!this.bgScene) {
+          this.bgScene = new THREE.Scene();
+        }
+        const texture = loader.load(this.bgObj.imgUrl);
+        texture.magFilter = THREE.LinearFilter;
+        texture.minFilter = THREE.LinearFilter;
+
+        const shader = THREE.ShaderLib.equirect;
+        const material = new THREE.ShaderMaterial({
+          fragmentShader: shader.fragmentShader,
+          vertexShader: shader.vertexShader,
+          uniforms: shader.uniforms,
+          depthWrite: false,
+          side: THREE.BackSide,
+        });
+        material.uniforms.tEquirect.value = texture;
+        const plane = new THREE.BoxBufferGeometry(2, 2, 2);
+        this.bgMesh = new THREE.Mesh(plane, material);
+        this.bgScene.add(this.bgMesh);
       }
      
       // 相机
-      this.camera = new THREE.PerspectiveCamera( 75, canvasAspect, 1, 1000 );
+      this.camera = new THREE.PerspectiveCamera( 75, canvasAspect, 0.7, 700 );
       this.camera.position.set(-74, 0, 83);
       this.camera.lookAt(this.scene.position)
 
@@ -91,9 +113,6 @@ export default {
 			this.scene.add(aLight);
       var light = new THREE.DirectionalLight( 0xffffff, 1);
       this.scene.add(light);
-      // const pLight = new THREE.PointLight(0xffffff, 1);
-			// pLight.position.set(0, 110, 200);
-      // this.scene.add(pLight);
 
       // 渲染器
       this.renderer = new THREE.WebGLRenderer({
@@ -112,21 +131,15 @@ export default {
       this.controls.enablePan = false;
       this.controls.target.set(0, 0, 0);
       this.controls.update();
-      this.controls.addEventListener('change', (event)=>{
-        // console.log(event)
-        this.render()
-      })
+      // this.controls.addEventListener('change', (event)=>{
+      // console.log(event)
+      //   this.render()
+      // })
+      this.controls.addEventListener('change', this.render)
 
       // 加载模型
-      this.loadModel()
-    },
-    loadModel(){
-      if (this.isBg) {
-        // this.loadTextureModal()
-        this.loadTextureImage()
-      } else {
-        this.switchMaterialModel()
-      }
+      // this.loadTextureModal()
+      this.loadTextureImage()
     },
     loadTextureImage() {
       let _this = this
@@ -163,10 +176,12 @@ export default {
           console.log("OBJLoaded: ", (xhr.loaded / xhr.total * 100).toFixed(0), "%");
           
           let per = (xhr.loaded / xhr.total * 100).toFixed(0);
+          let elem = document.getElementById("loadingPercent")
+          let loading = document.getElementById('loading')
           if(per < 100) {
-            document.getElementById("loadingPercent").innerHTML = per;
+            elem && (elem.innerHTML = per);
           }else {
-            document.getElementById("loading").remove();
+            loading && loading.remove();
           }
         },
         function(err) {
@@ -213,39 +228,35 @@ export default {
         console.error("MTLError: ", err);
       })
     },
-    switchMaterialModel(){
-      let _this = this
-      const objLoader = new OBJLoader();
-      objLoader.load(
-        "/cat/12221_Cat_v1_l3.obj",
-        function(obj) {
-          obj.rotateX(-20)
-          obj.rotateY(0)
-          _this.scene.add(obj)
-          _this.render()
-        },
-        function(xhr) {
-          console.log("OBJLoaded: ", (xhr.loaded / xhr.total * 100).toFixed(0), "%");
-          
-          let per = (xhr.loaded / xhr.total * 100).toFixed(0);
-          if(per < 100) {
-            document.getElementById("loadingPercent").innerHTML = per;
-          }else {
-            document.getElementById("loading").remove();
-          }
-        },
-        function(err) {
-          console.error("OBJError: ", err);
-        })
-    },
     render() {
+      if (this.resizeRendererToDisplaySize(this.renderer)) {
+        const canvas = this.renderer.domElement;
+        this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        this.camera.updateProjectionMatrix();
+      }
+
+      if (!this.isBg && this.bgMesh) {
+        this.bgMesh.position.copy(this.camera.position)
+      }
+      !this.isBg && this.renderer.render(this.bgScene, this.camera);
       this.renderer.render(this.scene, this.camera);
+      console.log('render', this.rotate)
       if (this.rotate) {
         this.scene.rotation.y += 0.002;
       }
      
       cancelAnimationFrame(animationId)
       animationId = requestAnimationFrame(this.render);
+    },
+    resizeRendererToDisplaySize(renderer) {
+      const canvas = renderer.domElement;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const needResize = canvas.width !== width || canvas.height !== height;
+      if (needResize) {
+        renderer.setSize(width, height, false);
+      }
+      return needResize;
     }
   }
 }

@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <NetLiZi :rotate="setAnimation" :bgObj="currentBg" :type="currentBg.type"></NetLiZi>
+    <NetLiZi :rotate="setAnimation" :bgObj="currentBg"></NetLiZi>
     <!-- <v-robot></v-robot> -->
     <div class="viewer-bottom">
       <div class="viewer-bottom-right">
@@ -51,11 +51,12 @@ export default {
             }
           ]
         }
-      ]
+      ],
+      currentBg: null
     }
   },
   created(){
-    this.currentBg = this.list[0].bgs[1]
+    this.currentBg = this.list[0].bgs[0]
   },
   components: {
     // VRobot,
