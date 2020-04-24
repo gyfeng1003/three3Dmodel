@@ -10,6 +10,9 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader' // obj文件加
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import {MTLLoader} from 'three/examples/jsm/loaders/MTLLoader'
 let animationId = null
+let wh =  window.innerWidth / window.innerHeight
+let w = window.innerWidth
+let h = window.innerHeight
 export default {
   data(){
     return {
@@ -23,7 +26,8 @@ export default {
       controls: null,
       // 背景场景
       bgScene: null,
-      bgMesh: null
+      bgMesh: null,
+      material: null
     }
   },
   props: {
@@ -40,7 +44,7 @@ export default {
     }
   },
   mounted(){
-    // this.init()
+    this.init()
   },
   computed: {
     isBg() {
@@ -50,61 +54,36 @@ export default {
   watch: {
     bgObj: {
       deep: true,
-      immediate: true,
       handler (val) {
         console.log('change', val)
-        this.$nextTick(()=>{
-          this.init()
-        })
+        if (this.isBg) {
+          this.setSceneBg()
+        } else {
+          let loader = new THREE.CubeTextureLoader();
+          let texture = loader.load([
+            '/image/BlueNebula2048_right.jpg',
+            '/image/BlueNebula2048_left.jpg',
+            '/image/BlueNebula2048_back.jpg',
+            '/image/BlueNebula2048_front.jpg',
+            '/image/BlueNebula2048_top.jpg',
+            '/image/BlueNebula2048_bottom.jpg',
+          ])
+          this.scene.background = texture
+        }
       }
     }
   },
   methods: {
     init(){
-      let elem = document.getElementById('netlizi')
-      let canvasAspect = elem.clientWidth / elem.clientHeight
-
       // 场景
       this.scene = new THREE.Scene();
-      //Load background texture
-      let loader = new THREE.TextureLoader();
-      let _this = this
-      if (this.isBg) { //设置背景图
-        loader.load(this.bgObj.imgUrl, function(value){
-          let defaultBg = value
-          _this.scene.background = defaultBg;
-          let imageAspect=defaultBg.image?defaultBg.image.width/defaultBg.image.height:1;
-          let aspect=imageAspect/canvasAspect;
+      // 设置背景场景
+      this.bgScene = new THREE.Scene()
+      this.setSceneBg()
+      this.setSceneMeshBg()
 
-          defaultBg.offset.x = aspect > 1 ? (1-1/aspect)/2:0;
-          defaultBg.repeat.x = aspect > 1 ?1 / aspect:1;
-          defaultBg.offset.y = aspect > 1 ? 0 : (1 - aspect) / 2;
-          defaultBg.repeat.y = aspect > 1 ? 1 : aspect;
-        })
-      } else {
-        if (!this.bgScene) {
-          this.bgScene = new THREE.Scene();
-        }
-        const texture = loader.load(this.bgObj.imgUrl);
-        texture.magFilter = THREE.LinearFilter;
-        texture.minFilter = THREE.LinearFilter;
-
-        const shader = THREE.ShaderLib.equirect;
-        const material = new THREE.ShaderMaterial({
-          fragmentShader: shader.fragmentShader,
-          vertexShader: shader.vertexShader,
-          uniforms: shader.uniforms,
-          depthWrite: false,
-          side: THREE.BackSide,
-        });
-        material.uniforms.tEquirect.value = texture;
-        const plane = new THREE.BoxBufferGeometry(2, 2, 2);
-        this.bgMesh = new THREE.Mesh(plane, material);
-        this.bgScene.add(this.bgMesh);
-      }
-     
       // 相机
-      this.camera = new THREE.PerspectiveCamera( 75, canvasAspect, 0.7, 700 );
+      this.camera = new THREE.PerspectiveCamera( 75, wh, 0.7, 700 );
       this.camera.position.set(-74, 0, 83);
       this.camera.lookAt(this.scene.position)
 
@@ -119,7 +98,7 @@ export default {
         antialias: true
       });
       this.renderer.autoClearColor = false;
-      this.renderer.setSize(elem.clientWidth, elem.clientHeight)
+      this.renderer.setSize(w, h)
       this.renderer.setClearColor(0x000000, 1);
       let container = document.getElementById('netlizi')
       container.appendChild(this.renderer.domElement)
@@ -140,6 +119,43 @@ export default {
       // 加载模型
       // this.loadTextureModal()
       this.loadTextureImage()
+    },
+    setSceneBg() {
+      let loader = new THREE.TextureLoader();
+      let _this = this
+      if (this.isBg) { //设置背景图
+        loader.load(this.bgObj.imgUrl, function(value){
+          let defaultBg = value
+          _this.scene.background = defaultBg;
+          let imageAspect=defaultBg.image?defaultBg.image.width/defaultBg.image.height:1;
+          let aspect=imageAspect/wh;
+
+          defaultBg.offset.x = aspect > 1 ? (1-1/aspect)/2:0;
+          defaultBg.repeat.x = aspect > 1 ?1 / aspect:1;
+          defaultBg.offset.y = aspect > 1 ? 0 : (1 - aspect) / 2;
+          defaultBg.repeat.y = aspect > 1 ? 1 : aspect;
+        })
+      }
+    },
+    setSceneMeshBg() {
+      const loader = new THREE.TextureLoader();
+      const texture = loader.load(this.bgObj.imgUrl);
+      texture.magFilter = THREE.LinearFilter;
+      texture.minFilter = THREE.LinearFilter;
+      const shader = THREE.ShaderLib.equirect;
+      this.material = new THREE.ShaderMaterial({
+        fragmentShader: shader.fragmentShader,
+        vertexShader: shader.vertexShader,
+        uniforms: shader.uniforms,
+        depthWrite: false,
+        side: THREE.BackSide,
+      });
+      this.material.uniforms.tEquirect.value = texture;
+      this.material.needsUpdate = true
+      this.material.uniformsNeedUpdate = true
+      const plane = new THREE.BoxBufferGeometry(2, 2, 2);
+      this.bgMesh = new THREE.Mesh(plane, this.material);
+      this.bgScene.add(this.bgMesh);
     },
     loadTextureImage() {
       let _this = this
@@ -230,19 +246,21 @@ export default {
     },
     render() {
       if (this.resizeRendererToDisplaySize(this.renderer)) {
-        const canvas = this.renderer.domElement;
-        this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        this.camera.updateProjectionMatrix();
+        // const canvas = this.renderer.domElement;
+        // this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        // this.camera.updateProjectionMatrix();
       }
-
+      
       if (!this.isBg && this.bgMesh) {
         this.bgMesh.position.copy(this.camera.position)
       }
-      !this.isBg && this.renderer.render(this.bgScene, this.camera);
+      // !this.isBg && this.renderer.render(this.bgScene, this.camera);
+      this.renderer.render(this.bgScene, this.camera);
       this.renderer.render(this.scene, this.camera);
-      console.log('render', this.rotate)
       if (this.rotate) {
         this.scene.rotation.y += 0.002;
+      } else {
+        cancelAnimationFrame(animationId)
       }
      
       cancelAnimationFrame(animationId)

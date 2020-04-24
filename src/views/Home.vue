@@ -56,7 +56,7 @@ export default {
     }
   },
   created(){
-    this.currentBg = this.list[0].bgs[0]
+    this.currentBg = this.list[0].bgs[1]
   },
   components: {
     // VRobot,
