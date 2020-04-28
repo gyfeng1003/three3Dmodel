@@ -36,21 +36,21 @@ export default {
           bgs: [
             {
               type: 'bg',
-              imgUrl: `/image/xingkong.jpg`
+              imgUrl: `image/xingkong.jpg`
             },
             {
               type: 'model',
-              imgUrl: `/image/360room.jpg`,
-              srcPath: '/image/Yokohama3/'
+              imgUrl: `image/360room.jpg`,
+              srcPath: 'image/Yokohama3/'
             },
             {
               type: 'bg',
-              imgUrl: `/image/meshimg.jpg`
+              imgUrl: `image/meshimg.jpg`
             },
             {
               type: 'model',
-              imgUrl: `/image/mohu.jpg`,
-              srcPath: `/image/GoldenGateBridge2/`
+              imgUrl: `image/mohu.jpg`,
+              srcPath: `image/GoldenGateBridge2/`
             }
           ]
         }

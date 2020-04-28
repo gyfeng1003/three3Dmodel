@@ -170,8 +170,8 @@ export default {
       let _this = this
       var loader = new THREE.TextureLoader();
       const objLoader = new OBJLoader();
-      var texture = loader.load('/cat/Cat_diffuse.jpg');
-      var textureBump = loader.load('/cat/Cat_bump.jpg');
+      var texture = loader.load('cat/Cat_diffuse.jpg');
+      var textureBump = loader.load('cat/Cat_bump.jpg');
       var tableMat = new THREE.MeshStandardMaterial({
         map: texture,
         // normalMap: textureBump, 
@@ -184,7 +184,7 @@ export default {
       textureBump.wrapT = THREE.RepeatWrapping
    
       objLoader.load(
-        "/cat/12221_Cat_v1_l3.obj",
+        "cat/12221_Cat_v1_l3.obj",
         function(obj) {
           let tablet = obj
           tablet.traverse(function(child) {
@@ -217,7 +217,7 @@ export default {
       let _this = this
       const mtlLoader = new MTLLoader();
       const objLoader = new OBJLoader();
-			mtlLoader.setPath("/cat/")
+			mtlLoader.setPath("cat/")
       .load(
       "12221_Cat_v1_l3.mtl",
       function(mtl) {
@@ -225,7 +225,7 @@ export default {
         objLoader
         .setMaterials(mtl)
         .load(
-        "/cat/12221_Cat_v1_l3.obj",
+        "cat/12221_Cat_v1_l3.obj",
         function(obj) {
           obj.rotateX(-20)
           obj.rotateY(0)
