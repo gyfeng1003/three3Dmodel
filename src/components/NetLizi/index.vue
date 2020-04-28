@@ -8,7 +8,8 @@
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader' // obj文件加载
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import {MTLLoader} from 'three/examples/jsm/loaders/MTLLoader'
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
+import { StereoEffect } from 'three/examples/jsm/effects/StereoEffect'
 let animationId = null
 let wh =  window.innerWidth / window.innerHeight
 let w = window.innerWidth
@@ -27,7 +28,8 @@ export default {
       // 背景场景
       bgScene: null,
       bgMesh: null,
-      material: null
+      material: null,
+      VrRender: null // VR分屏 render
     }
   },
   props: {
@@ -41,6 +43,10 @@ export default {
         type: '',
         imgUrl: ``
       })
+    },
+    itsVr: {
+      type: Boolean,
+      default: false
     }
   },
   mounted(){
@@ -98,6 +104,8 @@ export default {
       this.renderer = new THREE.WebGLRenderer({
         antialias: true
       });
+      // VR分屏
+      this.VrRender = new StereoEffect(this.renderer);//VR分屏
       this.renderer.autoClearColor = false;
       this.renderer.setSize(w, h)
       this.renderer.setClearColor(0x000000, 1);
@@ -256,8 +264,15 @@ export default {
         this.bgMesh.position.copy(this.camera.position)
       }
       // !this.isBg && this.renderer.render(this.bgScene, this.camera);
-      this.renderer.render(this.bgScene, this.camera);
-      this.renderer.render(this.scene, this.camera);
+      // this.renderer.render(this.bgScene, this.camera); // 天空盒全景图texture渲染
+
+      if(this.itsVr){
+				this.VrRender.setSize(w, h);//设置渲染场景尺寸
+				this.VrRender.render(this.scene, this.camera);
+			} else{
+				this.renderer.setSize(w, h);//设置渲染场景尺寸
+				this.renderer.render(this.scene, this.camera);
+			}
       if (this.rotate) {
         this.scene.rotation.y += 0.002;
       } else {

@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <NetLiZi :rotate="setAnimation" :bgObj="currentBg"></NetLiZi>
+    <NetLiZi :rotate="setAnimation" :bgObj="currentBg" :itsVr="itsVr"></NetLiZi>
     <!-- <v-robot></v-robot> -->
     <div class="viewer-bottom">
       <div class="viewer-bottom-right">
@@ -10,7 +10,7 @@
           <i class="iconfont iconai-eye viewer-icon1" @click="showControl"></i>
           <ControlView class="views" :menus="list" v-show="controlShow" @clickMenu="clickMenu"></ControlView>
         </div>
-        <div class="control1"><i class="iconfont iconvr viewer-icon1"></i></div>
+        <div class="control1"><i @click="startVR" class="iconfont iconvr viewer-icon1"></i></div>
       </div>
     </div>
     <overlay v-show="showGuide" @close="close"></overlay>
@@ -22,6 +22,7 @@ import ControlView from '@/businessComp/controlView'
 import Overlay from '@/businessComp/overlay'
 import NetLiZi from '@/components/NetLizi'
 // import VRobot from '@/components/RobotComp'
+
 export default {
   name: 'Home',
   data() {
@@ -54,7 +55,8 @@ export default {
           ]
         }
       ],
-      currentBg: null
+      currentBg: null,
+      itsVr: false
     }
   },
   created(){
@@ -81,6 +83,14 @@ export default {
     },
     clickMenu(data){
       this.currentBg = data
+    },
+    startVR() {
+      if (document.fullscreenElement) { 
+        document.exitFullscreen() 
+      } else { 
+        document.documentElement.requestFullscreen() 
+      }
+      this.itsVr = !this.itsVr
     }
   }
 }
@@ -126,6 +136,9 @@ export default {
     position: absolute;
     right: -100px;
     bottom: 100%;
+  }
+  &:full-screen {
+
   }
 }
 </style>
