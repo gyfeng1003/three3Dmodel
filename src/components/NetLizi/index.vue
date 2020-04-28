@@ -60,13 +60,14 @@ export default {
           this.setSceneBg()
         } else {
           let loader = new THREE.CubeTextureLoader();
+          loader.setPath(this.bgObj.srcPath)
           let texture = loader.load([
-            '/image/BlueNebula2048_right.jpg',
-            '/image/BlueNebula2048_left.jpg',
-            '/image/BlueNebula2048_back.jpg',
-            '/image/BlueNebula2048_front.jpg',
-            '/image/BlueNebula2048_top.jpg',
-            '/image/BlueNebula2048_bottom.jpg',
+            'posx.jpg',
+            'negx.jpg',
+            'posy.jpg',
+            'negy.jpg',
+            'posz.jpg',
+            'negz.jpg'
           ])
           this.scene.background = texture
         }
@@ -80,7 +81,7 @@ export default {
       // 设置背景场景
       this.bgScene = new THREE.Scene()
       this.setSceneBg()
-      this.setSceneMeshBg()
+      // this.setSceneMeshBg()
 
       // 相机
       this.camera = new THREE.PerspectiveCamera( 75, wh, 0.7, 700 );
@@ -137,7 +138,7 @@ export default {
         })
       }
     },
-    setSceneMeshBg() {
+    setSceneMeshBg() { //使用全景图实现天空盒-存在bug：切换背景不生效，所以使用texture 6张图实现天空盒
       const loader = new THREE.TextureLoader();
       const texture = loader.load(this.bgObj.imgUrl);
       texture.magFilter = THREE.LinearFilter;

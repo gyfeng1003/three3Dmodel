@@ -39,15 +39,17 @@ export default {
             },
             {
               type: 'model',
-              imgUrl: `/image/360room.jpg`
+              imgUrl: `/image/360room.jpg`,
+              srcPath: '/image/Yokohama3/'
             },
             {
               type: 'bg',
               imgUrl: `/image/meshimg.jpg`
             },
             {
-              type: 'bg',
-              imgUrl: `/image/mohu.jpg`
+              type: 'model',
+              imgUrl: `/image/mohu.jpg`,
+              srcPath: `/image/GoldenGateBridge2/`
             }
           ]
         }
@@ -56,7 +58,7 @@ export default {
     }
   },
   created(){
-    this.currentBg = this.list[0].bgs[1]
+    this.currentBg = this.list[0].bgs[0]
   },
   components: {
     // VRobot,
