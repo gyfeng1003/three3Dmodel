@@ -26,7 +26,7 @@
     "less-loader": "^5.0.0",
     "lib-flexible": "^0.3.2",
     "postcss-pxtorem": "^5.1.1",
-    "three": "^0.115.0",
+    "three": "^0.125.0",
     "vue-template-compiler": "^2.6.11"
   }
 }
